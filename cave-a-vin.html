@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cave à Vin</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  :root{
+    --wine:#6B1A2A;--wine-light:#8B2A3F;--wine-dark:#4A0F1C;--gold:#C9A84C;--gold-light:#E8C96A;
+    --cream:#F9F4EE;--parchment:#EDE4D3;--ink:#1C1008;--muted:#7A6A55;
+    --card-bg:#FFFDF9;--border:#D4C5A9;--shadow:rgba(28,16,8,0.12);
+    --success:#2D7A4F;--danger:#8B1A1A;
+  }
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;overflow-x:hidden;}
+  h1,h2,h3,.serif{font-family:'Cormorant Garamond',serif;}
+
+  .nav{background:var(--wine-dark);padding:0;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,0.3);}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
+  .nav-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--gold-light);letter-spacing:0.05em;font-style:italic;}
+  .nav-tabs{display:flex;gap:2px;background:rgba(0,0,0,0.2);border-radius:8px;padding:3px;}
+  .nav-tab{background:transparent;border:none;color:rgba(255,255,255,0.6);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;padding:6px 12px;border-radius:6px;cursor:pointer;transition:all 0.2s;letter-spacing:0.03em;text-transform:uppercase;}
+  .nav-tab.active{background:var(--wine-light);color:#fff;}
+
+  .main{padding:16px;max-width:480px;margin:0 auto;}
+
+  .card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px var(--shadow);}
+  .card-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--wine-dark);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+  .card-title svg{width:20px;height:20px;flex-shrink:0;}
+
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .form-full{grid-column:1/-1;}
+  .field{display:flex;flex-direction:column;gap:4px;}
+  label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
+  input,select,textarea{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);outline:none;transition:border 0.2s;width:100%;}
+  input:focus,select:focus{border-color:var(--wine-light);}
+  select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A6A55' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all 0.2s;letter-spacing:0.02em;}
+  .btn-primary{background:var(--wine);color:#fff;}
+  .btn-primary:hover{background:var(--wine-light);}
+  .btn-secondary{background:var(--parchment);color:var(--wine-dark);border:1px solid var(--border);}
+  .btn-secondary:hover{background:var(--border);}
+  .btn-gold{background:var(--gold);color:var(--wine-dark);}
+  .btn-gold:hover{background:var(--gold-light);}
+  .btn-danger{background:#FEF2F2;color:var(--danger);border:1px solid #FCA5A5;}
+  .btn-sm{padding:7px 12px;font-size:12px;border-radius:8px;}
+  .btn-full{width:100%;}
+  .btn-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+
+  .scan-area{background:var(--wine-dark);border-radius:12px;overflow:hidden;position:relative;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;}
+  .scan-area video{width:100%;height:100%;object-fit:cover;}
+  .scan-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
+  .scan-frame{width:240px;height:100px;border:2px solid var(--gold);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,0.5);}
+  .scan-frame.photo-frame{width:200px;height:160px;}
+  .scan-label{color:rgba(255,255,255,0.9);font-size:13px;background:rgba(0,0,0,0.6);padding:6px 14px;border-radius:20px;}
+  .scan-pulse{animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{border-color:var(--gold);}50%{border-color:var(--gold-light);}}
+  canvas{display:none;}
+
+  .badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500;}
+  .badge-red{background:#FFF0F0;color:#8B1A1A;}
+  .badge-white{background:#FFFFF0;color:#5A5A00;}
+  .badge-rose{background:#FFF0F5;color:#8B1A4A;}
+  .badge-sparkling{background:#F0F5FF;color:#1A3A8B;}
+  .badge-other{background:#F5F0FF;color:#4A1A8B;}
+
+  .wine-item{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;position:relative;}
+  .wine-item-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .wine-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--wine-dark);line-height:1.2;}
+  .wine-vintage{font-size:13px;color:var(--muted);margin-top:2px;}
+  .wine-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .wine-meta span{font-size:12px;color:var(--muted);}
+  .wine-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+
+  .rack-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+  .rack-tab{padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;border:1px solid var(--border);background:#fff;cursor:pointer;transition:all 0.2s;color:var(--muted);}
+  .rack-tab.active{background:var(--wine);color:#fff;border-color:var(--wine);}
+
+  .grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .wine-grid{display:grid;gap:4px;}
+  .grid-cell{aspect-ratio:1;border-radius:6px;border:1px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;min-width:0;}
+  .grid-cell.occupied{background:var(--wine);border-color:var(--wine-dark);}
+  .grid-cell.occupied:hover{background:var(--wine-light);}
+  .grid-cell.empty:hover{background:var(--parchment);}
+  .grid-row-label{font-size:10px;font-weight:500;color:var(--muted);display:flex;align-items:center;justify-content:center;}
+  .grid-col-labels{display:grid;gap:4px;margin-bottom:4px;}
+  .grid-col-label{font-size:10px;color:var(--muted);text-align:center;font-weight:500;}
+  .bottle-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.7);}
+  .grid-legend{display:flex;gap:16px;margin-top:10px;}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);}
+  .legend-dot{width:12px;height:12px;border-radius:3px;}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;display:flex;align-items:flex-end;justify-content:center;}
+  .modal{background:var(--cream);border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;}
+  .modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--wine-dark);margin-bottom:20px;}
+  .modal-close{float:right;background:var(--parchment);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:18px;line-height:32px;text-align:center;color:var(--muted);}
+
+  .search-box{position:relative;}
+  .search-box input{padding-left:36px;}
+  .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);}
+
+  .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+  .stat-card{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;}
+  .stat-num{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--wine-dark);}
+  .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;}
+
+  .status-pill{display:inline-block;padding:6px 12px;border-radius:20px;font-size:13px;margin-bottom:4px;}
+  .status-ok{background:#F0FDF4;color:#166534;}
+  .status-err{background:#FEF2F2;color:#991B1B;}
+  .status-info{background:#EFF6FF;color:#1E40AF;}
+  .status-warn{background:#FFFBEB;color:#92400E;}
+
+  .place-hint{background:var(--parchment);border-radius:10px;padding:12px;font-size:13px;color:var(--muted);margin-bottom:12px;text-align:center;}
+  .divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+
+  /* Barcode result preview */
+  .lookup-result{background:var(--parchment);border-radius:12px;padding:14px;margin-top:12px;border:1px solid var(--border);}
+  .lookup-result-title{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--wine-dark);margin-bottom:8px;}
+  .lookup-field{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--border);}
+  .lookup-field:last-child{border-bottom:none;}
+  .lookup-field span:first-child{color:var(--muted);}
+  .lookup-field span:last-child{font-weight:500;text-align:right;max-width:65%;}
+
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(0,0,0,0.1);border-top-color:var(--wine);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  @media(max-width:360px){.form-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <span class="nav-title">Cave à Vin</span>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showTab('inventory')">Cellar</button>
+      <button class="nav-tab" onclick="showTab('racks')">Racks</button>
+      <button class="nav-tab" onclick="showTab('add')">+ Add</button>
+    </div>
+  </div>
+</nav>
+
+<div class="main">
+
+  <!-- INVENTORY TAB -->
+  <div id="tab-inventory">
+    <div class="stats-row" id="stats-row"></div>
+    <div class="card" style="padding:14px;">
+      <div class="search-box">
+        <span class="search-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </span>
+        <input type="text" id="search-input" placeholder="Search wines…" oninput="renderInventory()">
+      </div>
+    </div>
+    <div id="wine-list"></div>
+    <div id="empty-state" style="text-align:center;padding:40px 20px;display:none;">
+      <div style="font-size:40px;margin-bottom:12px;">🍷</div>
+      <p style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--wine-dark);">Your cellar is empty</p>
+      <p style="color:var(--muted);font-size:14px;margin-top:6px;">Add your first bottle to begin</p>
+      <button class="btn btn-primary" style="margin-top:16px;" onclick="showTab('add')">Add a bottle</button>
+    </div>
+  </div>
+
+  <!-- RACKS TAB -->
+  <div id="tab-racks" style="display:none;">
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 8h20M2 13h20M7 8v13M12 8v13M17 8v13"/></svg>
+        Wine Racks
+      </div>
+      <div class="rack-tabs" id="rack-tabs"></div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">Tap an occupied cell to see the wine. Tap empty to place a bottle.</p>
+      <div class="grid-col-labels" id="col-labels"></div>
+      <div class="grid-wrap"><div class="wine-grid" id="wine-grid"></div></div>
+      <div class="grid-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--wine);"></div> Occupied</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fff;border:1px solid var(--border);"></div> Empty</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD TAB -->
+  <div id="tab-add" style="display:none;">
+
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 10h20M6 10v8M10 10v8M14 10v8M18 10v8"/></svg>
+        Scan or Photograph
+      </div>
+
+      <!-- camera area (hidden until activated) -->
+      <div id="camera-area" style="display:none;">
+        <div class="scan-area" id="scan-area">
+          <video id="video" autoplay muted playsinline></video>
+          <div class="scan-overlay">
+            <div class="scan-frame scan-pulse" id="scan-frame"></div>
+            <div class="scan-label" id="scan-label">Align barcode in frame</div>
+          </div>
+        </div>
+        <canvas id="canvas"></canvas>
+        <div style="margin-top:10px;">
+          <div id="scan-status"></div>
+          <div class="btn-row">
+            <button class="btn btn-gold btn-sm" id="capture-btn" onclick="captureForAI()" style="display:none;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M20.94 11A8.994 8.994 0 0 0 12 3a9 9 0 0 0-8.94 8 9.006 9.006 0 0 0 8.94 8 9 9 0 0 0 8.94-8z"/></svg>
+              Read Label with AI
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="stopCamera()">Stop Camera</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- buttons shown when camera is off -->
+      <div id="camera-buttons" class="btn-row">
+        <button class="btn btn-secondary" onclick="startBarcodeScan()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5v4M3 15v4M7 5h.01M7 15h.01M7 5v4M7 15v4M11 5h.01M11 15h.01M11 5v4M11 15v4M15 5h.01M15 15h.01M15 5v4M15 15v4M19 5h.01M19 15h.01M19 5v4M19 15v4"/></svg>
+          Scan Barcode
+        </button>
+        <button class="btn btn-secondary" onclick="startLabelPhoto()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+          Photo Label
+        </button>
+      </div>
+
+      <!-- manual barcode entry fallback -->
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+        <label style="display:block;margin-bottom:6px;">Or enter barcode manually</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="manual-barcode" placeholder="e.g. 3760049910014" inputmode="numeric" style="flex:1;">
+          <button class="btn btn-secondary btn-sm" onclick="lookupBarcodeManual()">Look up</button>
+        </div>
+      </div>
+
+      <div id="ai-status" style="margin-top:10px;"></div>
+      <div id="lookup-result-area"></div>
+    </div>
+
+    <!-- MANUAL ENTRY FORM -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Wine Details
+      </div>
+      <div class="form-grid">
+        <div class="field form-full"><label>Wine Name *</label><input id="f-name" type="text" placeholder="e.g. Château Margaux"></div>
+        <div class="field"><label>Vintage</label><input id="f-vintage" type="number" placeholder="2018" min="1800" max="2099"></div>
+        <div class="field"><label>Type *</label>
+          <select id="f-type">
+            <option value="">Select…</option>
+            <option>Red</option><option>White</option><option>Rosé</option><option>Sparkling</option><option>Dessert</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field"><label>Bottle Size</label>
+          <select id="f-size">
+            <option value="">Standard</option>
+            <option>187.5ml (Split)</option><option>375ml (Half)</option><option>750ml (Standard)</option>
+            <option>1.5L (Magnum)</option><option>3L (Double Magnum)</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field"><label>Grape Variety</label><input id="f-grape" type="text" placeholder="e.g. Cabernet Sauvignon"></div>
+        <div class="field"><label>Country</label><input id="f-country" type="text" placeholder="e.g. France"></div>
+        <div class="field form-full"><label>Region / Appellation</label><input id="f-region" type="text" placeholder="e.g. Bordeaux, Pauillac"></div>
+        <div class="field"><label>Quantity</label><input id="f-qty" type="number" value="1" min="1" max="100"></div>
+        <div class="field"><label>Notes</label><input id="f-notes" type="text" placeholder="Optional notes"></div>
+      </div>
+      <div class="btn-row" style="margin-top:16px;">
+        <button class="btn btn-primary btn-full" onclick="addWine()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add to Cellar
+        </button>
+      </div>
+      <div id="add-status" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- PLACE BOTTLE MODAL -->
+<div class="modal-bg" id="place-modal" style="display:none;" onclick="closePlaceModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closePlaceModal()">✕</button>
+    <div class="modal-title">Place in Rack</div>
+    <div id="place-content"></div>
+  </div>
+</div>
+
+<!-- CELL INFO MODAL -->
+<div class="modal-bg" id="cell-modal" style="display:none;" onclick="closeCellModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeCellModal()">✕</button>
+    <div id="cell-content"></div>
+  </div>
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────────
+const RACKS=['A','B','C','D','E','F'];
+const ROWS=11,COLS=6;
+let db={wines:[],placements:{}};
+let currentRack='A';
+let cameraStream=null;
+let cameraMode=null;
+let placingWineId=null;
+let barcodeActive=false;
+
+function loadDB(){
+  try{const s=localStorage.getItem('cave_db');if(s)db=JSON.parse(s);}catch(e){}
+  if(!db.placements)db.placements={};
+  if(!db.wines)db.wines=[];
+}
+function saveDB(){try{localStorage.setItem('cave_db',JSON.stringify(db));}catch(e){}}
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+
+// ── TABS ──────────────────────────────────────────────────────────────────
+function showTab(name){
+  ['inventory','racks','add'].forEach((t,i)=>{
+    document.getElementById('tab-'+t).style.display=t===name?'':'none';
+    document.querySelectorAll('.nav-tab')[i].classList.toggle('active',t===name);
+  });
+  if(name==='inventory'){renderInventory();renderStats();}
+  if(name==='racks'){renderRackTabs();renderGrid();}
+  if(name!=='add')stopCamera();
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────
+function renderStats(){
+  const total=db.wines.reduce((s,w)=>s+(w.qty||1),0);
+  const placed=Object.keys(db.placements).length;
+  document.getElementById('stats-row').innerHTML=`
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Bottles</div></div>
+    <div class="stat-card"><div class="stat-num">${db.wines.length}</div><div class="stat-label">Labels</div></div>
+    <div class="stat-card"><div class="stat-num">${placed}</div><div class="stat-label">Placed</div></div>`;
+}
+
+// ── INVENTORY ─────────────────────────────────────────────────────────────
+function typeColor(t){
+  if(t==='Red')return 'badge-red';
+  if(t==='White')return 'badge-white';
+  if(t==='Rosé')return 'badge-rose';
+  if(t==='Sparkling')return 'badge-sparkling';
+  return 'badge-other';
+}
+function getPlacementsForWine(id){
+  return Object.entries(db.placements).filter(([k,v])=>v===id).map(([k])=>k);
+}
+function renderInventory(){
+  const q=document.getElementById('search-input').value.toLowerCase();
+  const wines=db.wines.filter(w=>
+    !q||w.name.toLowerCase().includes(q)||
+    (w.grape||'').toLowerCase().includes(q)||
+    (w.country||'').toLowerCase().includes(q)||
+    (w.region||'').toLowerCase().includes(q)||
+    String(w.vintage||'').includes(q)
+  );
+  const list=document.getElementById('wine-list');
+  const empty=document.getElementById('empty-state');
+  if(wines.length===0){list.innerHTML='';empty.style.display=db.wines.length===0?'block':'none';return;}
+  empty.style.display='none';
+  list.innerHTML=wines.map(w=>{
+    const places=getPlacementsForWine(w.id);
+    const placeStr=places.length?places.map(p=>{
+      const[rack,r,c]=p.split('-');
+      return`${rack}${parseInt(r)+1}-${parseInt(c)+1}`;
+    }).join(', '):'Not placed';
+    return`<div class="wine-item">
+      <div class="wine-item-header">
+        <div style="flex:1;min-width:0;">
+          <div class="wine-name">${w.name}</div>
+          <div class="wine-vintage">${w.vintage?w.vintage+' · ':''}${w.size||'750ml'}</div>
+        </div>
+        <span class="badge ${typeColor(w.type)}">${w.type||'—'}</span>
+      </div>
+      <div class="wine-meta">
+        ${w.grape?`<span>🍇 ${w.grape}</span>`:''}
+        ${w.country?`<span>🌍 ${w.country}${w.region?' · '+w.region:''}</span>`:''}
+        <span>📦 ×${w.qty||1}</span>
+        <span style="color:var(--wine-dark);">📍 ${placeStr}</span>
+      </div>
+      ${w.notes?`<div style="font-size:12px;color:var(--muted);margin-top:6px;font-style:italic;">${w.notes}</div>`:''}
+      <div class="wine-actions">
+        <button class="btn btn-sm btn-secondary" onclick="openPlaceModal('${w.id}')">Place in Rack</button>
+        <button class="btn btn-sm btn-secondary" onclick="editWine('${w.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="consumeWine('${w.id}')">Consume</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── ADD WINE ──────────────────────────────────────────────────────────────
+function addWine(){
+  const name=(document.getElementById('f-name').value||'').trim();
+  if(!name){setStatus('add-status','err','Wine name is required');return;}
+  const wine={
+    id:genId(),
+    name,
+    vintage:document.getElementById('f-vintage').value||'',
+    type:document.getElementById('f-type').value,
+    size:document.getElementById('f-size').value||'750ml (Standard)',
+    grape:document.getElementById('f-grape').value,
+    country:document.getElementById('f-country').value,
+    region:document.getElementById('f-region').value,
+    notes:document.getElementById('f-notes').value,
+    qty:parseInt(document.getElementById('f-qty').value)||1,
+    addedAt:new Date().toISOString()
+  };
+  db.wines.push(wine);saveDB();
+  clearForm();
+  document.getElementById('lookup-result-area').innerHTML='';
+  setStatus('add-status','ok','✓ Added to cellar!');
+  setTimeout(()=>setStatus('add-status','',''),3000);
+}
+
+function clearForm(){
+  ['f-name','f-vintage','f-grape','f-country','f-region','f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-type').value='';
+  document.getElementById('f-size').value='';
+  document.getElementById('f-qty').value='1';
+}
+
+function fillForm(data){
+  if(data.name)document.getElementById('f-name').value=data.name;
+  if(data.vintage)document.getElementById('f-vintage').value=data.vintage;
+  if(data.type){
+    const sel=document.getElementById('f-type');
+    const match=[...sel.options].find(o=>o.value.toLowerCase()===data.type.toLowerCase());
+    if(match)sel.value=match.value;
+  }
+  if(data.grape)document.getElementById('f-grape').value=data.grape;
+  if(data.country)document.getElementById('f-country').value=data.country;
+  if(data.region)document.getElementById('f-region').value=data.region;
+  if(data.size){
+    const sel=document.getElementById('f-size');
+    const match=[...sel.options].find(o=>o.value.includes(data.size)||data.size.includes(o.value));
+    if(match)sel.value=match.value;
+  }
+}
+
+function setStatus(id,type,msg){
+  const el=document.getElementById(id);if(!el)return;
+  if(!msg){el.innerHTML='';return;}
+  const cls={ok:'status-ok',err:'status-err',info:'status-info',warn:'status-warn'}[type]||'';
+  el.innerHTML=`<div class="status-pill ${cls}">${msg}</div>`;
+}
+
+// ── CONSUME / EDIT ────────────────────────────────────────────────────────
+function consumeWine(id){
+  const w=db.wines.find(x=>x.id===id);if(!w)return;
+  if(!confirm(`Consume one bottle of "${w.name}"?`))return;
+  if((w.qty||1)>1){w.qty=(w.qty||1)-1;}
+  else{
+    db.wines=db.wines.filter(x=>x.id!==id);
+    const places=getPlacementsForWine(id);
+    if(places.length)delete db.placements[places[0]];
+  }
+  saveDB();renderInventory();renderStats();
+}
+
+function editWine(id){
+  const w=db.wines.find(x=>x.id===id);if(!w)return;
+  showTab('add');
+  setTimeout(()=>{
+    fillForm(w);
+    document.getElementById('f-notes').value=w.notes||'';
+    document.getElementById('f-qty').value=w.qty||1;
+    db.wines=db.wines.filter(x=>x.id!==id);
+    saveDB();
+  },50);
+}
+
+// ── BARCODE LOOKUP (multi-source) ─────────────────────────────────────────
+async function lookupBarcode(code){
+  setStatus('ai-status','info','<span class="spinner"></span>Looking up barcode '+code+'…');
+  document.getElementById('lookup-result-area').innerHTML='';
+
+  let wineData=null;
+
+  // 1. Try Open Food Facts first (huge wine database, free, no key)
+  try{
+    const r=await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`,{signal:AbortSignal.timeout(8000)});
+    const d=await r.json();
+    if(d.status===1&&d.product){
+      const p=d.product;
+      const productName=p.product_name||p.product_name_en||'';
+      // extract vintage from name or labels
+      const vintageMatch=(productName+' '+(p.labels||'')).match(/\b(19|20)\d{2}\b/);
+      // try to determine wine type
+      let type='';
+      const cats=(p.categories||'').toLowerCase();
+      const labels=(p.labels||'').toLowerCase();
+      if(cats.includes('red')||labels.includes('rouge')||cats.includes('rouge'))type='Red';
+      else if(cats.includes('white')||labels.includes('blanc')||cats.includes('blanc'))type='White';
+      else if(cats.includes('ros'))type='Rosé';
+      else if(cats.includes('sparkling')||cats.includes('champagne')||cats.includes('prosecco')||cats.includes('cava'))type='Sparkling';
+
+      if(productName){
+        wineData={
+          name:productName,
+          vintage:vintageMatch?vintageMatch[0]:'',
+          type,
+          grape:p.ingredients_text||'',
+          country:p.countries_tags?p.countries_tags[0].replace('en:',''):'',
+          region:'',
+          size:p.quantity||''
+        };
+      }
+    }
+  }catch(e){console.log('OFF lookup failed',e);}
+
+  // 2. Try UPC Item DB (good for US wines)
+  if(!wineData){
+    try{
+      const r=await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${code}`,{signal:AbortSignal.timeout(8000)});
+      const d=await r.json();
+      if(d.code==='OK'&&d.items&&d.items.length>0){
+        const item=d.items[0];
+        const name=item.title||item.brand||'';
+        if(name){
+          const vintageMatch=name.match(/\b(19|20)\d{2}\b/);
+          let type='';
+          const desc=(item.description||item.category||'').toLowerCase();
+          if(desc.includes('red'))type='Red';
+          else if(desc.includes('white'))type='White';
+          else if(desc.includes('ros'))type='Rosé';
+          else if(desc.includes('sparkling')||desc.includes('champagne'))type='Sparkling';
+          wineData={
+            name,
+            vintage:vintageMatch?vintageMatch[0]:'',
+            type,
+            grape:'',
+            country:'',
+            region:'',
+            size:item.size||''
+          };
+        }
+      }
+    }catch(e){console.log('UPC lookup failed',e);}
+  }
+
+  // 3. Try Open Brewery / wine-specific lookup via Claude as last resort
+  if(!wineData){
+    try{
+      const r=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          model:'claude-sonnet-4-20250514',max_tokens:400,
+          messages:[{role:'user',content:`Wine barcode: ${code}. If you know this specific wine from your training data, return a JSON object with: name, vintage, type (Red/White/Rosé/Sparkling/Dessert/Other), grape, country, region, size. If you do not know this exact product, return {"unknown":true}. No markdown, no explanation, JSON only.`}]
+        }),
+        signal:AbortSignal.timeout(15000)
+      });
+      const d=await r.json();
+      const txt=(d.content||[]).map(x=>x.text||'').join('').replace(/```json|```/g,'').trim();
+      const parsed=JSON.parse(txt);
+      if(!parsed.unknown&&parsed.name)wineData=parsed;
+    }catch(e){console.log('Claude lookup failed',e);}
+  }
+
+  if(wineData&&wineData.name){
+    // Clean up country name
+    if(wineData.country)wineData.country=wineData.country.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    // Clean up grape (remove non-grape text from OFF ingredients)
+    if(wineData.grape&&wineData.grape.length>60)wineData.grape='';
+
+    fillForm(wineData);
+    showLookupResult(wineData,code);
+    setStatus('ai-status','ok','✓ Wine found — check details below and add to cellar.');
+  }else{
+    setStatus('ai-status','warn','⚠ Barcode '+code+' not found in wine databases. Please fill in details manually.');
+  }
+}
+
+function showLookupResult(data,code){
+  const fields=[
+    ['Barcode',code],
+    ['Name',data.name],
+    ['Vintage',data.vintage||'—'],
+    ['Type',data.type||'—'],
+    ['Grape',data.grape||'—'],
+    ['Country',data.country||'—'],
+    ['Region',data.region||'—'],
+    ['Size',data.size||'—'],
+  ];
+  document.getElementById('lookup-result-area').innerHTML=`
+    <div class="lookup-result">
+      <div class="lookup-result-title">${data.name}</div>
+      ${fields.slice(2).map(([k,v])=>`<div class="lookup-field"><span>${k}</span><span>${v}</span></div>`).join('')}
+      <p style="font-size:11px;color:var(--muted);margin-top:10px;">Details have been filled into the form below. Edit if needed, then tap Add to Cellar.</p>
+    </div>`;
+}
+
+function lookupBarcodeManual(){
+  const code=(document.getElementById('manual-barcode').value||'').trim();
+  if(!code){setStatus('ai-status','err','Please enter a barcode number');return;}
+  lookupBarcode(code);
+}
+
+// ── CAMERA ────────────────────────────────────────────────────────────────
+async function startCamera(mode){
+  cameraMode=mode;
+  document.getElementById('camera-buttons').style.display='none';
+  document.getElementById('camera-area').style.display='block';
+  const frame=document.getElementById('scan-frame');
+  if(mode==='barcode'){
+    frame.classList.remove('photo-frame');
+    document.getElementById('scan-label').textContent='Align barcode in frame';
+    document.getElementById('capture-btn').style.display='none';
+  }else{
+    frame.classList.add('photo-frame');
+    document.getElementById('scan-label').textContent='Position label, then tap Read Label';
+    document.getElementById('capture-btn').style.display='inline-flex';
+  }
+  try{
+    cameraStream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}
+    });
+    document.getElementById('video').srcObject=cameraStream;
+    if(mode==='barcode'){
+      await new Promise(r=>document.getElementById('video').addEventListener('loadedmetadata',r,{once:true}));
+      startBarcodeLoop();
+    }
+  }catch(err){
+    let msg='Camera access denied.';
+    if(err.name==='NotAllowedError')msg='Camera permission denied. Please allow camera access in Chrome site settings.';
+    else if(err.name==='NotFoundError')msg='No camera found on this device.';
+    setStatus('ai-status','err',msg);
+    stopCamera();
+  }
+}
+
+function startBarcodeScan(){startCamera('barcode');}
+function startLabelPhoto(){startCamera('label');}
+
+function stopCamera(){
+  barcodeActive=false;
+  if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null;}
+  document.getElementById('video').srcObject=null;
+  document.getElementById('camera-area').style.display='none';
+  document.getElementById('camera-buttons').style.display='flex';
+  document.getElementById('scan-status').innerHTML='';
+}
+
+function startBarcodeLoop(){
+  if(!('BarcodeDetector' in window)){
+    // Fallback: use canvas + interval to try BarcodeDetector polyfill approach
+    setStatus('scan-status','warn','Auto-scan not supported in this browser. Use the manual barcode field below, or switch to Photo Label mode.');
+    return;
+  }
+  barcodeActive=true;
+  const detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39','qr_code']});
+  const video=document.getElementById('video');
+
+  async function scan(){
+    if(!barcodeActive||!cameraStream)return;
+    try{
+      const codes=await detector.detect(video);
+      if(codes.length>0){
+        const code=codes[0].rawValue;
+        barcodeActive=false;
+        stopCamera();
+        document.getElementById('manual-barcode').value=code;
+        lookupBarcode(code);
+        return;
+      }
+    }catch(e){}
+    if(barcodeActive)requestAnimationFrame(scan);
+  }
+  requestAnimationFrame(scan);
+}
+
+async function captureForAI(){
+  const video=document.getElementById('video');
+  const canvas=document.getElementById('canvas');
+  canvas.width=video.videoWidth||640;
+  canvas.height=video.videoHeight||480;
+  canvas.getContext('2d').drawImage(video,0,0);
+  const base64=canvas.toDataURL('image/jpeg',0.9).split(',')[1];
+  stopCamera();
+  setStatus('ai-status','info','<span class="spinner"></span>Reading label with AI…');
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:600,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:base64}},
+          {type:'text',text:'This is a photo of a wine label. Extract all visible wine information and return ONLY a JSON object with these fields: name, vintage (4-digit year), type (one of: Red, White, Rosé, Sparkling, Dessert, Other), grape, country, region, size. Set any unknown fields to empty string "". No markdown, no explanation, only the JSON object.'}
+        ]}]
+      }),
+      signal:AbortSignal.timeout(20000)
+    });
+    const d=await r.json();
+    const txt=(d.content||[]).map(x=>x.text||'').join('').replace(/```json|```/g,'').trim();
+    const data=JSON.parse(txt);
+    fillForm(data);
+    showLookupResult(data,'(from photo)');
+    setStatus('ai-status','ok','✓ Label read — verify details and add to cellar.');
+  }catch(e){
+    setStatus('ai-status','err','Could not read label. Please fill in details manually.');
+  }
+}
+
+// ── RACKS ─────────────────────────────────────────────────────────────────
+function renderRackTabs(){
+  document.getElementById('rack-tabs').innerHTML=RACKS.map(r=>
+    `<button class="rack-tab ${r===currentRack?'active':''}" onclick="selectRack('${r}')">Rack ${r}</button>`
+  ).join('');
+}
+function selectRack(r){currentRack=r;renderRackTabs();renderGrid();}
+
+function renderGrid(){
+  const colTemplate=`24px repeat(${COLS},1fr)`;
+  document.getElementById('col-labels').style.gridTemplateColumns=colTemplate;
+  document.getElementById('col-labels').innerHTML=
+    `<div></div>`+Array.from({length:COLS},(_,c)=>`<div class="grid-col-label">${c+1}</div>`).join('');
+
+  const grid=document.getElementById('wine-grid');
+  grid.style.gridTemplateColumns=colTemplate;
+  let html='';
+  for(let r=0;r<ROWS;r++){
+    html+=`<div class="grid-row-label">${r+1}</div>`;
+    for(let c=0;c<COLS;c++){
+      const key=`${currentRack}-${r}-${c}`;
+      const wId=db.placements[key];
+      const w=wId?db.wines.find(x=>x.id===wId):null;
+      html+=w
+        ?`<div class="grid-cell occupied" onclick="showCellInfo('${key}')" title="${w.name}"><div class="bottle-dot"></div></div>`
+        :`<div class="grid-cell empty" onclick="askPlaceInCell('${key}')"></div>`;
+    }
+  }
+  grid.innerHTML=html;
+}
+
+function showCellInfo(key){
+  const wId=db.placements[key];
+  const w=db.wines.find(x=>x.id===wId);if(!w)return;
+  const[rack,r,c]=key.split('-');
+  document.getElementById('cell-content').innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--wine);display:flex;align-items:center;justify-content:center;font-size:20px;">🍷</div>
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--wine-dark);">${w.name}</div>
+        <div style="font-size:13px;color:var(--muted);">Rack ${rack}, Row ${parseInt(r)+1}, Col ${parseInt(c)+1}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;">
+      ${w.vintage?`<div><span style="color:var(--muted)">Vintage</span><br><strong>${w.vintage}</strong></div>`:''}
+      ${w.type?`<div><span style="color:var(--muted)">Type</span><br><strong>${w.type}</strong></div>`:''}
+      ${w.grape?`<div><span style="color:var(--muted)">Grape</span><br><strong>${w.grape}</strong></div>`:''}
+      ${w.country?`<div><span style="color:var(--muted)">Origin</span><br><strong>${w.country}${w.region?', '+w.region:''}</strong></div>`:''}
+      ${w.size?`<div><span style="color:var(--muted)">Size</span><br><strong>${w.size}</strong></div>`:''}
+    </div>
+    <hr class="divider">
+    <div class="btn-row">
+      <button class="btn btn-secondary btn-sm" onclick="removeFromCell('${key}')">Remove from rack</button>
+      <button class="btn btn-danger btn-sm" onclick="consumeFromCell('${key}')">Consume bottle</button>
+    </div>`;
+  document.getElementById('cell-modal').style.display='flex';
+}
+
+function removeFromCell(key){
+  delete db.placements[key];saveDB();
+  closeCellModal();renderGrid();renderInventory();renderStats();
+}
+function consumeFromCell(key){
+  const wId=db.placements[key];
+  const w=db.wines.find(x=>x.id===wId);
+  if(!w||!confirm(`Consume "${w.name}" from this slot?`))return;
+  delete db.placements[key];
+  if((w.qty||1)>1)w.qty=(w.qty||1)-1;
+  else db.wines=db.wines.filter(x=>x.id!==wId);
+  saveDB();closeCellModal();renderGrid();renderInventory();renderStats();
+}
+
+function askPlaceInCell(key){
+  if(db.wines.length===0){alert('Add wines to your cellar first.');return;}
+  placingWineId=null;
+  const[rack,r,c]=key.split('-');
+  document.getElementById('place-content').innerHTML=`
+    <div class="place-hint">Placing in Rack ${rack}, Row ${parseInt(r)+1}, Col ${parseInt(c)+1}</div>
+    ${db.wines.map(w=>`
+      <div class="wine-item" style="cursor:pointer;" onclick="placeWineInCell('${w.id}','${key}')">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--wine-dark);">${w.name}</div>
+            <div style="font-size:12px;color:var(--muted);">${w.vintage||''} ${w.type||''}</div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--wine)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>`).join('')}`;
+  document.getElementById('place-modal').style.display='flex';
+}
+
+function placeWineInCell(wId,key){
+  db.placements[key]=wId;saveDB();
+  closePlaceModal();renderGrid();renderInventory();renderStats();
+}
+
+// ── PLACE MODAL (from inventory) ──────────────────────────────────────────
+function openPlaceModal(wId){
+  placingWineId=wId;
+  const w=db.wines.find(x=>x.id===wId);
+  document.getElementById('place-content').innerHTML=`
+    <div class="place-hint">Placing: <strong>${w.name}</strong></div>
+    <div class="rack-tabs" id="modal-rack-tabs" style="margin-bottom:12px;">
+      ${RACKS.map(r=>`<button class="rack-tab ${r===currentRack?'active':''}" onclick="selectModalRack('${r}')">${r}</button>`).join('')}
+    </div>
+    <div id="modal-grid-wrap"></div>`;
+  renderModalGrid(currentRack,wId);
+  document.getElementById('place-modal').style.display='flex';
+}
+
+function selectModalRack(r){
+  currentRack=r;
+  document.querySelectorAll('#modal-rack-tabs .rack-tab').forEach((el,i)=>el.classList.toggle('active',RACKS[i]===r));
+  renderModalGrid(r,placingWineId);
+}
+
+function renderModalGrid(rack,wId){
+  const colTemplate=`24px repeat(${COLS},1fr)`;
+  let html=`<div style="display:grid;grid-template-columns:${colTemplate};gap:4px;margin-bottom:4px;">
+    <div></div>${Array.from({length:COLS},(_,c)=>`<div class="grid-col-label">${c+1}</div>`).join('')}
+  </div>
+  <div class="grid-wrap"><div class="wine-grid" id="modal-grid" style="grid-template-columns:${colTemplate};">`;
+  for(let r=0;r<ROWS;r++){
+    html+=`<div class="grid-row-label">${r+1}</div>`;
+    for(let c=0;c<COLS;c++){
+      const key=`${rack}-${r}-${c}`;
+      const oId=db.placements[key];
+      const ow=oId?db.wines.find(x=>x.id===oId):null;
+      html+=oId
+        ?`<div class="grid-cell occupied" title="${ow?ow.name:'occupied'}"><div class="bottle-dot"></div></div>`
+        :`<div class="grid-cell empty" onclick="placeWineInCell('${wId}','${key}')"></div>`;
+    }
+  }
+  html+='</div></div>';
+  document.getElementById('modal-grid-wrap').innerHTML=html;
+}
+
+function closePlaceModal(e){
+  if(e&&e.target!==document.getElementById('place-modal'))return;
+  document.getElementById('place-modal').style.display='none';
+  renderGrid();
+}
+function closeCellModal(e){
+  if(e&&e.target!==document.getElementById('cell-modal'))return;
+  document.getElementById('cell-modal').style.display='none';
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+loadDB();renderInventory();renderStats();
+</script>
+</body>
+</html>
